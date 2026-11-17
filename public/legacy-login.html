@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Portal - Sign in</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+    <main class="login-card">
+        <div class="logo" aria-hidden="true">🎓</div>
+        <h1>Student Portal</h1>
+        <p class="subtitle">Sign in to your account</p>
+
+        <form id="loginForm">
+            <label for="loginRole">Account type</label>
+            <select id="loginRole" required>
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Administrator</option>
+            </select>
+
+            <label for="loginEmail">Email address</label>
+            <input id="loginEmail" type="email" autocomplete="username" maxlength="254" required>
+
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" type="password" autocomplete="current-password" required>
+
+            <button type="submit">Sign in</button>
+            <p id="loginMessage" class="form-message" aria-live="polite"></p>
+        </form>
+
+        <section id="registrationPanel" class="hidden">
+            <h2>Create an account</h2>
+            <p class="subtitle">Teacher accounts require administrator approval.</p>
+            <form id="registrationForm">
+                <label for="registerRole">Register as</label>
+                <select id="registerRole" required>
+                    <option value="student">Student</option>
+                    <option value="teacher">Teacher</option>
+                </select>
+
+                <label for="fullName">Full name</label>
+                <input id="fullName" type="text" minlength="2" maxlength="120" autocomplete="name" required>
+
+                <label for="registerEmail">Email address</label>
+                <input id="registerEmail" type="email" maxlength="254" autocomplete="email" required>
+
+                <div id="studentCodeField">
+                    <label for="studentCode">Student ID</label>
+                    <input id="studentCode" type="text" maxlength="40" required>
+                </div>
+                <div id="employeeCodeField" class="hidden">
+                    <label for="employeeCode">Employee ID</label>
+                    <input id="employeeCode" type="text" maxlength="40" disabled>
+                </div>
+
+                <label for="department">Department</label>
+                <select id="department" required>
+                    <option value="">Loading departments...</option>
+                </select>
+
+                <div id="studentAcademicFields">
+                    <label for="studyYear">Year of study</label>
+                    <select id="studyYear" required>
+                        <option value="">Select year</option>
+                        <option value="1">Year 1</option>
+                        <option value="2">Year 2</option>
+                        <option value="3">Year 3</option>
+                        <option value="4">Year 4</option>
+                        <option value="5">Year 5</option>
+                        <option value="6">Year 6</option>
+                        <option value="7">Year 7</option>
+                        <option value="8">Year 8</option>
+                    </select>
+
+                    <label for="section">Section</label>
+                    <input id="section" type="text" maxlength="20">
+                </div>
+
+                <label for="phone">Phone number (optional)</label>
+                <input id="phone" type="tel" maxlength="30" autocomplete="tel">
+
+                <label for="registerPassword">Password (at least 12 characters)</label>
+                <input id="registerPassword" type="password" minlength="12" maxlength="128" autocomplete="new-password" required>
+
+                <button type="submit">Create account</button>
+                <p id="registrationMessage" class="form-message" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <button id="toggleRegistration" class="secondary-button" type="button">Create an account</button>
+    </main>
+    <script src="js/login.js"></script>
+</body>
+</html>

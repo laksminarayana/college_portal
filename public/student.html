@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Student Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="css/style.css"
+    >
+
+</head>
+
+<body>
+
+    <div class="dashboard">
+
+        <aside class="sidebar">
+
+            <div class="brand">
+                🎓 Student Portal
+            </div>
+
+            <nav>
+
+                <button type="button" data-section="profile">
+                    👤 Profile
+                </button>
+
+                <button type="button" data-section="attendance">
+                    📅 Attendance
+                </button>
+
+                <button type="button" data-section="marks">
+                    📊 Marks
+                </button>
+
+            </nav>
+
+            <button
+                class="logout"
+                id="logoutButton"
+                type="button"
+            >
+                Logout
+            </button>
+
+        </aside>
+
+
+        <main class="main-content">
+
+            <header class="topbar">
+
+                <div>
+
+                    <h2>
+                        Student Dashboard
+                    </h2>
+
+                    <p id="welcomeText">
+                        Welcome
+                    </p>
+
+                </div>
+
+            </header>
+
+
+            <!-- PROFILE -->
+
+            <section
+                id="profile"
+                class="content-section"
+            >
+
+                <h2>My Profile</h2>
+
+                <div class="cards">
+
+                    <div class="info-card">
+                        <span>Name</span>
+                        <strong id="studentName"></strong>
+                    </div>
+
+                    <div class="info-card">
+                        <span>Email</span>
+                        <strong id="studentEmail"></strong>
+                    </div>
+
+                    <div class="info-card">
+                        <span>Department</span>
+                        <strong id="studentDepartment"></strong>
+                    </div>
+
+                    <div class="info-card">
+                        <span>Year</span>
+                        <strong id="studentYear"></strong>
+                    </div>
+
+                    <div class="info-card">
+                        <span>Section</span>
+                        <strong id="studentSection"></strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ATTENDANCE -->
+
+            <section
+                id="attendance"
+                class="content-section hidden"
+            >
+
+                <h2>My Attendance</h2>
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Subject</th>
+                                <th>Total Classes</th>
+                                <th>Attended</th>
+                                <th>Percentage</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="attendanceTable">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <!-- MARKS -->
+
+            <section
+                id="marks"
+                class="content-section hidden"
+            >
+
+                <h2>My Marks</h2>
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>Subject</th>
+                                <th>Exam</th>
+                                <th>Marks</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="marksTable">
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+    <script src="js/student.js"></script>
+
+</body>
+
+</html>

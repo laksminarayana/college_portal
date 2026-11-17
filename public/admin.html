@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="brand">🎓 Student Portal</div>
+            <nav>
+                <button type="button" class="active">Dashboard</button>
+            </nav>
+            <button id="logoutButton" class="logout" type="button">Sign out</button>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <h1>Administrator Dashboard</h1>
+                <p id="welcomeText">Loading account...</p>
+            </header>
+
+            <section>
+                <h2>Overview</h2>
+                <div class="cards">
+                    <div class="info-card"><span>Students</span><strong id="totalStudents">—</strong></div>
+                    <div class="info-card"><span>Approved teachers</span><strong id="totalTeachers">—</strong></div>
+                    <div class="info-card"><span>Departments</span><strong id="totalDepartments">—</strong></div>
+                    <div class="info-card"><span>Attendance records</span><strong id="totalAttendance">—</strong></div>
+                </div>
+            </section>
+
+            <section class="admin-section">
+                <h2>Teacher registrations awaiting review</h2>
+                <p id="adminMessage" class="form-message" aria-live="polite"></p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Employee ID</th>
+                                <th>Department</th>
+                                <th>Decision</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pendingTeachers"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section class="admin-section">
+                <h2>Academic setup</h2>
+                <div class="admin-forms">
+                    <form id="departmentForm" class="form-card">
+                        <h3>Add department</h3>
+                        <label for="departmentName">Department name</label>
+                        <input id="departmentName" maxlength="120" required>
+                        <button type="submit">Add department</button>
+                        <p id="departmentMessage" class="form-message" aria-live="polite"></p>
+                    </form>
+
+                    <form id="subjectForm" class="form-card">
+                        <h3>Add subject</h3>
+                        <label for="subjectName">Subject name</label>
+                        <input id="subjectName" maxlength="120" required>
+                        <label for="subjectCode">Subject code</label>
+                        <input id="subjectCode" maxlength="40" required>
+                        <label for="subjectDepartment">Department</label>
+                        <select id="subjectDepartment" required></select>
+                        <button type="submit">Add subject</button>
+                        <p id="subjectMessage" class="form-message" aria-live="polite"></p>
+                    </form>
+
+                    <form id="assignmentForm" class="form-card">
+                        <h3>Assign teacher</h3>
+                        <label for="assignmentTeacher">Teacher</label>
+                        <select id="assignmentTeacher" required></select>
+                        <label for="assignmentSubject">Subject</label>
+                        <select id="assignmentSubject" required></select>
+                        <label for="assignmentYear">Year</label>
+                        <select id="assignmentYear" required>
+                            <option value="1">Year 1</option>
+                            <option value="2">Year 2</option>
+                            <option value="3">Year 3</option>
+                            <option value="4">Year 4</option>
+                            <option value="5">Year 5</option>
+                            <option value="6">Year 6</option>
+                            <option value="7">Year 7</option>
+                            <option value="8">Year 8</option>
+                        </select>
+                        <label for="assignmentSection">Section (optional; blank means all sections)</label>
+                        <input id="assignmentSection" maxlength="20">
+                        <button type="submit">Create assignment</button>
+                        <p id="assignmentMessage" class="form-message" aria-live="polite"></p>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="js/admin.js"></script>
+</body>
+</html>
