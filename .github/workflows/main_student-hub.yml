@@ -1,3 +1,4 @@
+
 name: Build and deploy Student Portal
 
 on:
@@ -21,12 +22,17 @@ jobs:
           node-version: "22.x"
           cache: npm
 
-      - name: Install, test, and build
-        run: |
-          npm ci
-          npm test
-          npm run build
-          npm prune --omit=dev
+      - name: Install dependencies
+        run: npm ci --include=dev
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build React application
+        run: npm run build
+
+      - name: Remove development dependencies
+        run: npm prune --omit=dev
 
       - name: Upload app for deployment
         uses: actions/upload-artifact@v4
