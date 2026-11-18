@@ -14,7 +14,8 @@ public/                 Legacy static pages and public assets
 scripts/
   create-admin.js       One-time first administrator setup
 src/
-  App.jsx               React registration, login, and role dashboards
+  App.jsx               React registration, login, and authenticated shell
+  Dashboard.jsx         Lazy-loaded student, teacher, and admin workspaces
   main.jsx
   style.css
 test/
@@ -98,6 +99,7 @@ Express serves the built React app at `http://localhost:5000`.
 ## Validation
 
 ```powershell
+npm ci --include=dev
 npm test
 npm run build
 npm audit
@@ -111,11 +113,32 @@ an administrator created, and valid local `.env` credentials.
 ## API performance and operations
 
 API requests emit JSON duration records to the server log for Azure Log Stream.
+The path field uses Express route templates (for example, `/api/student/:id`)
+so IDs are not logged and metrics group requests by endpoint. Unauthenticated
+`/api/auth/me` requests return 401 and are handled as a normal logged-out state
+in the React app.
 List endpoints accept `page` and `limit` query parameters (default 50, maximum
 100) and return totals in `X-Total-Count`, `X-Page`, `X-Page-Size`, and
 `X-Total-Pages` headers. The React app loads authenticated dashboards on demand.
 Hashed build assets are cached as immutable; HTML stays revalidated so new
 deployments are picked up. Authentication endpoints are rate limited.
+The admin workspace fetches its overview data first and defers academic and
+assignment lists until those sections are opened. The legacy teacher form
+reuses the same student and subject responses for its two selectors.
+
+The process liveness endpoint is `GET /healthz` and does not depend on Azure
+SQL. Configure the App Service Health check path to `/healthz` when available;
+use `/api/status` separately to verify database connectivity. Always On and
+Application Insights are Azure-side settings and are not configured by this
+repository.
+
+The local build initially included React's development runtime because the
+ignored `.env` sets `NODE_ENV=development`. Vite now explicitly builds the
+client with React's production runtime. On this checkout, the initial JavaScript
+bundle changed from 510.28 kB (157.32 kB gzip) to 303.01 kB (96.10 kB gzip),
+about 41% smaller raw and 39% smaller compressed. The separate lazy dashboard
+chunk is 44.94 kB (8.00 kB gzip). These are local build sizes, not Azure
+request-latency measurements.
 
 Redis is not configured: the current portal has no measured cache bottleneck,
 and introducing shared cache infrastructure would add operational cost and

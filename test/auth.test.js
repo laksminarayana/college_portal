@@ -59,7 +59,7 @@ test("API responses emit structured duration logs", async () => {
     const originalLog = console.log;
     console.log = (entry) => entries.push(entry);
     try {
-        const response = await fetch(`${baseUrl}/api/teacher/attendance-classes`);
+        const response = await fetch(`${baseUrl}/api/student/123/attendance`);
         await response.text();
         assert.equal(response.status, 401);
     } finally {
@@ -67,10 +67,17 @@ test("API responses emit structured duration logs", async () => {
     }
 
     const entry = entries.map((line) => JSON.parse(line))
-        .find((line) => line.type === "api_request" && line.path === "/api/teacher/attendance-classes");
+        .find((line) => line.type === "api_request" && line.path === "/api/student/:id/attendance");
     assert.ok(entry);
     assert.equal(entry.status, 401);
     assert.equal(typeof entry.duration_ms, "number");
+});
+
+test("the process health check does not depend on Azure SQL", async () => {
+    const response = await fetch(`${baseUrl}/healthz`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { status: "ok" });
+    assert.equal(response.headers.get("cache-control"), "no-store");
 });
 
 test("admin APIs reject authenticated non-admin users", async () => {

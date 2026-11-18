@@ -51,6 +51,10 @@ app.use(helmet());
 app.use(express.json({ limit: "20kb" }));
 app.use(express.urlencoded({ extended: false, limit: "20kb" }));
 app.use(cookieParser());
+app.get("/healthz", (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    res.json({ status: "ok" });
+});
 app.use("/api", (req, res, next) => {
     const start = process.hrtime.bigint();
     res.setHeader("Cache-Control", "no-store");
@@ -59,7 +63,7 @@ app.use("/api", (req, res, next) => {
         console.log(JSON.stringify({
             type: "api_request",
             method: req.method,
-            path: req.path,
+            path: typeof req.route?.path === "string" ? req.route.path : req.path,
             status: res.statusCode,
             duration_ms: Number(durationMs.toFixed(2))
         }));

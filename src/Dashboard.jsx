@@ -418,46 +418,101 @@ function AdminDashboard({ user, view, onNavigate }) {
     const [teacherPage, setTeacherPage] = useState(1);
     const [pendingPagination, setPendingPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
     const [teachersPagination, setTeachersPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
+    const [dashboardLoaded, setDashboardLoaded] = useState(false);
+    const [pendingLoadedPage, setPendingLoadedPage] = useState(null);
+    const [departmentsLoaded, setDepartmentsLoaded] = useState(false);
+    const [teachersLoadedPage, setTeachersLoadedPage] = useState(null);
+    const [subjectsLoaded, setSubjectsLoaded] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
     useEffect(() => {
-        Promise.all([
-            api.get("/dashboard/admin"),
-            api.get("/departments"),
-            api.get("/subjects")
-        ]).then(([stats, departmentsList, subjectList]) => {
-            setDashboard(stats.data.dashboard);
-            setDepartments(departmentsList.data.departments);
-            setSubjects(subjectList.data);
-        }).catch((requestError) => setError(getErrorMessage(requestError)));
-    }, []);
+        if (view !== "overview" || dashboardLoaded) return undefined;
+        let current = true;
+        api.get("/dashboard/admin")
+            .then(({ data }) => {
+                if (current) {
+                    setDashboard(data.dashboard);
+                    setDashboardLoaded(true);
+                }
+            })
+            .catch((requestError) => {
+                if (current) setError(getErrorMessage(requestError));
+            });
+        return () => { current = false; };
+    }, [view, dashboardLoaded]);
 
     useEffect(() => {
+        if (!["overview", "approvals"].includes(view) || pendingLoadedPage === pendingPage) return undefined;
+        let current = true;
         api.get("/admin/teachers/pending", { params: { page: pendingPage, limit: pendingPagination.limit } })
             .then((response) => {
+                if (!current) return;
                 setPending(response.data.teachers);
                 const nextPagination = paginationFromResponse(response);
                 setPendingPagination(nextPagination);
+                setPendingLoadedPage(nextPagination.page);
                 if (nextPagination.totalPages > 0 && pendingPage > nextPagination.totalPages) {
                     setPendingPage(nextPagination.totalPages);
                 }
             })
-            .catch((requestError) => setError(getErrorMessage(requestError)));
-    }, [pendingPage]);
+            .catch((requestError) => {
+                if (current) setError(getErrorMessage(requestError));
+            });
+        return () => { current = false; };
+    }, [view, pendingPage, pendingPagination.limit, pendingLoadedPage]);
 
     useEffect(() => {
+        if (view !== "academic" || departmentsLoaded) return undefined;
+        let current = true;
+        api.get("/departments")
+            .then(({ data }) => {
+                if (current) {
+                    setDepartments(data.departments);
+                    setDepartmentsLoaded(true);
+                }
+            })
+            .catch((requestError) => {
+                if (current) setError(getErrorMessage(requestError));
+            });
+        return () => { current = false; };
+    }, [view, departmentsLoaded]);
+
+    useEffect(() => {
+        if (!["academic", "assignments"].includes(view) || subjectsLoaded) return undefined;
+        let current = true;
+        api.get("/subjects")
+            .then(({ data }) => {
+                if (current) {
+                    setSubjects(data);
+                    setSubjectsLoaded(true);
+                }
+            })
+            .catch((requestError) => {
+                if (current) setError(getErrorMessage(requestError));
+            });
+        return () => { current = false; };
+    }, [view, subjectsLoaded]);
+
+    useEffect(() => {
+        if (view !== "assignments" || teachersLoadedPage === teacherPage) return undefined;
+        let current = true;
         api.get("/admin/teachers", { params: { page: teacherPage, limit: teachersPagination.limit } })
             .then((response) => {
+                if (!current) return;
                 setTeachers(response.data.teachers);
                 const nextPagination = paginationFromResponse(response);
                 setTeachersPagination(nextPagination);
+                setTeachersLoadedPage(nextPagination.page);
                 if (nextPagination.totalPages > 0 && teacherPage > nextPagination.totalPages) {
                     setTeacherPage(nextPagination.totalPages);
                 }
             })
-            .catch((requestError) => setError(getErrorMessage(requestError)));
-    }, [teacherPage]);
+            .catch((requestError) => {
+                if (current) setError(getErrorMessage(requestError));
+            });
+        return () => { current = false; };
+    }, [view, teacherPage, teachersPagination.limit, teachersLoadedPage]);
 
     async function approve(teacherId, status) {
         setError("");
@@ -465,29 +520,24 @@ function AdminDashboard({ user, view, onNavigate }) {
         try {
             const { data } = await api.put(`/admin/teachers/${teacherId}/approval`, { status });
             setMessage(data.message);
-            const refreshes = [
-                api.get("/dashboard/admin"),
+            const [stats, pendingList] = await Promise.all([
+                view === "overview" ? api.get("/dashboard/admin") : Promise.resolve(null),
                 api.get("/admin/teachers/pending", { params: { page: pendingPage, limit: pendingPagination.limit } })
-            ];
-            if (status === "approved") {
-                refreshes.push(api.get("/admin/teachers", { params: { page: teacherPage, limit: teachersPagination.limit } }));
+            ]);
+            if (stats) {
+                setDashboard(stats.data.dashboard);
+                setDashboardLoaded(true);
+            } else {
+                setDashboardLoaded(false);
             }
-            const [stats, pendingList, teacherList] = await Promise.all(refreshes);
-            setDashboard(stats.data.dashboard);
             setPending(pendingList.data.teachers);
             const nextPendingPagination = paginationFromResponse(pendingList);
             setPendingPagination(nextPendingPagination);
+            setPendingLoadedPage(nextPendingPagination.page);
             if (nextPendingPagination.totalPages > 0 && pendingPage > nextPendingPagination.totalPages) {
                 setPendingPage(nextPendingPagination.totalPages);
             }
-            if (teacherList) {
-                setTeachers(teacherList.data.teachers);
-                const nextTeacherPagination = paginationFromResponse(teacherList);
-                setTeachersPagination(nextTeacherPagination);
-                if (nextTeacherPagination.totalPages > 0 && teacherPage > nextTeacherPagination.totalPages) {
-                    setTeacherPage(nextTeacherPagination.totalPages);
-                }
-            }
+            setTeachersLoadedPage(null);
         } catch (requestError) {
             setError(getErrorMessage(requestError));
         }
@@ -505,9 +555,11 @@ function AdminDashboard({ user, view, onNavigate }) {
             if (endpoint === "/departments") {
                 const { data: departmentList } = await api.get("/departments");
                 setDepartments(departmentList.departments);
+                setDepartmentsLoaded(true);
             } else if (endpoint === "/subjects") {
                 const { data: subjectList } = await api.get("/subjects");
                 setSubjects(subjectList);
+                setSubjectsLoaded(true);
             }
         } catch (requestError) {
             setError(getErrorMessage(requestError));

@@ -17,15 +17,17 @@ function setMessage(id, text) {
     document.getElementById(id).textContent = text;
 }
 
-async function loadOptions(url, selectId, getValue, getLabel) {
+async function loadOptions(url, selectIds, getValue, getLabel) {
     const response = await fetch(url);
     if (!response.ok) {
         throw new Error("Unable to load dashboard options.");
     }
     const items = await response.json();
-    const select = document.getElementById(selectId);
-    select.replaceChildren();
-    items.forEach((item) => select.add(new Option(getLabel(item), getValue(item))));
+    selectIds.forEach((selectId) => {
+        const select = document.getElementById(selectId);
+        select.replaceChildren();
+        items.forEach((item) => select.add(new Option(getLabel(item), getValue(item))));
+    });
     return items;
 }
 
@@ -51,16 +53,10 @@ async function loadTeacherPortal() {
     document.getElementById("totalSubjects").textContent = dashboard.total_subjects;
 
     await Promise.all([
-        loadOptions("/api/teacher/students", "attendanceStudent",
+        loadOptions("/api/teacher/students", ["attendanceStudent", "marksStudent"],
             (student) => student.student_id,
             (student) => `${student.name} (${student.username})`),
-        loadOptions("/api/subjects", "attendanceSubject",
-            (subject) => subject.subject_id,
-            (subject) => subject.subject_name),
-        loadOptions("/api/teacher/students", "marksStudent",
-            (student) => student.student_id,
-            (student) => `${student.name} (${student.username})`),
-        loadOptions("/api/subjects", "marksSubject",
+        loadOptions("/api/subjects", ["attendanceSubject", "marksSubject"],
             (subject) => subject.subject_id,
             (subject) => subject.subject_name)
     ]);
