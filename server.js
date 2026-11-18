@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 const path = require("path");
 const { getPool, sql } = require("./database");
 const { authenticate, authorize, cookieOptions } = require("./middleware/auth");
+const { parsePagination, setPaginationHeaders } = require("./pagination");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
@@ -51,6 +52,21 @@ app.use(express.json({ limit: "20kb" }));
 app.use(express.urlencoded({ extended: false, limit: "20kb" }));
 app.use(cookieParser());
 app.use("/api", (req, res, next) => {
+    const start = process.hrtime.bigint();
+    res.setHeader("Cache-Control", "no-store");
+    res.on("finish", () => {
+        const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+        console.log(JSON.stringify({
+            type: "api_request",
+            method: req.method,
+            path: req.path,
+            status: res.statusCode,
+            duration_ms: Number(durationMs.toFixed(2))
+        }));
+    });
+    next();
+});
+app.use("/api", (req, res, next) => {
     const fetchSite = req.get("sec-fetch-site");
     const origin = req.get("origin");
     let originMismatch = false;
@@ -66,7 +82,15 @@ app.use("/api", (req, res, next) => {
     }
     return next();
 });
-app.use(express.static(path.join(__dirname, "dist")));
+app.use(express.static(path.join(__dirname, "dist"), {
+    maxAge: "1y",
+    immutable: true,
+    setHeaders(res, filePath) {
+        if (path.basename(filePath) === "index.html") {
+            res.setHeader("Cache-Control", "no-cache");
+        }
+    }
+}));
 app.use(express.static(path.join(__dirname, "public")));
 
 const authLimiter = rateLimit({
@@ -115,13 +139,38 @@ async function teacherCanManage(userId, studentId, subjectId) {
             JOIN TeacherAssignments ta ON ta.teacher_id = t.teacher_id
             JOIN Students s ON s.student_id = @student_id
             JOIN Subjects sub ON sub.subject_id = ta.subject_id
-            WHERE t.user_id = @user_id
+            WHERE t.user_id = @user_id AND t.approval_status = 'approved'
                 AND ta.subject_id = @subject_id
                 AND sub.department_id = s.department_id
                 AND ta.study_year = s.study_year
                 AND (ta.section IS NULL OR ta.section = s.section)
         `);
     return result.recordset.length > 0;
+}
+
+async function teacherCanManageStudents(userId, studentIds, subjectId) {
+    const pool = await getPool();
+    const request = pool.request()
+        .input("user_id", sql.Int, userId)
+        .input("subject_id", sql.Int, subjectId);
+    const requestedIds = studentIds.map((studentId, index) => {
+        const parameter = `student_id_${index}`;
+        request.input(parameter, sql.Int, studentId);
+        return `(@${parameter})`;
+    });
+    const result = await request.query(`
+        SELECT COUNT(DISTINCT requested.student_id) AS allowed_count
+        FROM (VALUES ${requestedIds.join(",")}) requested(student_id)
+        JOIN Teachers t ON t.user_id = @user_id AND t.approval_status = 'approved'
+        JOIN TeacherAssignments ta ON ta.teacher_id = t.teacher_id
+            AND ta.subject_id = @subject_id
+        JOIN Students s ON s.student_id = requested.student_id
+            AND s.study_year = ta.study_year
+            AND (ta.section IS NULL OR ta.section = s.section)
+        JOIN Subjects sub ON sub.subject_id = ta.subject_id
+            AND sub.department_id = s.department_id
+    `);
+    return Number(result.recordset[0].allowed_count) === studentIds.length;
 }
 
 function createSessionToken(user) {
@@ -136,8 +185,17 @@ function isDuplicateKey(error) {
     return error.number === 2601 || error.number === 2627;
 }
 
+function logError(context, error) {
+    console.error(JSON.stringify({
+        type: "api_error",
+        context,
+        code: error.code || null,
+        message: error.message || String(error)
+    }));
+}
+
 function sendDatabaseError(res, error, context, message) {
-    console.error(`${context}:`, error.message);
+    logError(context, error);
     const unavailableCodes = ["ETIMEOUT", "ESOCKET", "ECONNCLOSED", "ENOTOPEN", "ELOGIN"];
     const unavailable = unavailableCodes.includes(error.code) ||
         /failed to connect|connection.*timed out|login failed/i.test(error.message);
@@ -186,7 +244,7 @@ app.get("/api/status", async (req, res) => {
             message: "Database connected"
         });
     } catch (error) {
-        console.error("Database status error:", error.message);
+        logError("Database status error", error);
         res.status(503).json({
             success: false,
             message: "Database is unavailable"
@@ -230,7 +288,7 @@ app.post("/api/departments", authenticate, authorize("admin"), async (req, res) 
         if (isDuplicateKey(error)) {
             return res.status(409).json({ success: false, message: "Department already exists" });
         }
-        console.error("Department creation error:", error.message);
+        logError("Department creation error", error);
         return res.status(500).json({ success: false, message: "Unable to create department" });
     }
 });
@@ -258,7 +316,7 @@ app.post("/api/subjects", authenticate, authorize("admin"), async (req, res) => 
         if (isDuplicateKey(error)) {
             return res.status(409).json({ success: false, message: "Subject code already exists" });
         }
-        console.error("Subject creation error:", error.message);
+        logError("Subject creation error", error);
         return res.status(500).json({ success: false, message: "Unable to create subject" });
     }
 });
@@ -309,7 +367,7 @@ app.post("/api/admin/teacher-assignments", authenticate, authorize("admin"), asy
         if (error.number === 547) {
             return res.status(400).json({ success: false, message: "Teacher or subject does not exist" });
         }
-        console.error("Teacher assignment error:", error.message);
+        logError("Teacher assignment error", error);
         return res.status(500).json({ success: false, message: "Unable to create assignment" });
     }
 });
@@ -407,7 +465,7 @@ app.post("/api/auth/register", authLimiter, async (req, res) => {
             try {
                 await transaction.rollback();
             } catch (rollbackError) {
-                console.error("Registration rollback error:", rollbackError.message);
+                logError("Registration rollback error", rollbackError);
             }
         }
         if (isDuplicateKey(error)) {
@@ -479,18 +537,40 @@ app.get("/api/auth/me", authenticate, async (req, res) => {
         }
         return res.json({ success: true, role: user.role, user });
     } catch (error) {
-        console.error("Session lookup error:", error.message);
+        logError("Session lookup error", error);
         return res.status(500).json({ success: false, message: "Unable to load session" });
     }
 });
 
 app.get("/api/teacher/students", authenticate, authorize("teacher", "admin"), async (req, res) => {
+    const pagination = parsePagination(req.query);
+    if (!pagination) {
+        return res.status(400).json({ success: false, message: "Invalid page or page size" });
+    }
     try {
         const pool = await getPool();
         const result = await pool.request()
             .input("teacher_user_id", sql.Int, req.auth.user_id)
             .input("is_admin", sql.Bit, req.auth.role === "admin")
+            .input("offset", sql.Int, pagination.offset)
+            .input("page_size", sql.Int, pagination.limit)
             .query(`
+            SELECT COUNT_BIG(*) AS total
+            FROM Students s
+            JOIN Users u ON u.user_id = s.user_id
+            WHERE u.is_active = 1 AND (
+                @is_admin = 1 OR EXISTS (
+                    SELECT 1
+                    FROM TeacherAssignments ta
+                    JOIN Teachers t ON t.teacher_id = ta.teacher_id
+                    JOIN Subjects sub ON sub.subject_id = ta.subject_id
+                    WHERE t.user_id = @teacher_user_id
+                        AND sub.department_id = s.department_id
+                        AND ta.study_year = s.study_year
+                        AND (ta.section IS NULL OR ta.section = s.section)
+                )
+            );
+
             SELECT s.student_id, s.student_code AS username, u.full_name AS name, u.email,
                 d.department_name AS department, s.study_year AS year, s.section
             FROM Students s
@@ -508,12 +588,14 @@ app.get("/api/teacher/students", authenticate, authorize("teacher", "admin"), as
                         AND (ta.section IS NULL OR ta.section = s.section)
                 )
             )
-            ORDER BY u.full_name
+            ORDER BY u.full_name, s.student_id
+            OFFSET @offset ROWS FETCH NEXT @page_size ROWS ONLY
         `);
-        res.json(result.recordset);
+        const total = Number(result.recordsets[0][0].total);
+        setPaginationHeaders(res, pagination, total);
+        return res.json(result.recordsets[1]);
     } catch (error) {
-        console.error("Student fetch error:", error.message);
-        res.status(500).json({ success: false, message: "Unable to fetch students" });
+        return sendDatabaseError(res, error, "Student fetch error", "Unable to fetch students");
     }
 });
 
@@ -537,7 +619,7 @@ app.get("/api/teacher/attendance-classes", authenticate, authorize("teacher"), a
             `);
         res.json(result.recordset);
     } catch (error) {
-        console.error("Attendance class fetch error:", error.message);
+        logError("Attendance class fetch error", error);
         res.status(500).json({ success: false, message: "Unable to fetch attendance classes" });
     }
 });
@@ -563,7 +645,7 @@ app.get("/api/subjects", authenticate, async (req, res) => {
         `);
         res.json(result.recordset);
     } catch (error) {
-        console.error("Subject fetch error:", error.message);
+        logError("Subject fetch error", error);
         res.status(500).json({ success: false, message: "Unable to fetch subjects" });
     }
 });
@@ -591,7 +673,7 @@ app.get("/api/student/:id", authenticate, async (req, res) => {
         }
         return res.json({ success: true, student: result.recordset[0] });
     } catch (error) {
-        console.error("Profile error:", error.message);
+        logError("Profile error", error);
         return res.status(500).json({ success: false, message: "Unable to fetch student profile" });
     }
 });
@@ -660,7 +742,7 @@ app.get("/api/student/:id/attendance", authenticate, async (req, res) => {
             `);
         res.json({ success: true, attendance: result.recordset });
     } catch (error) {
-        console.error("Attendance fetch error:", error.message);
+        logError("Attendance fetch error", error);
         res.status(500).json({ success: false, message: "Unable to fetch attendance" });
     }
 });
@@ -682,7 +764,7 @@ app.get("/api/student/:id/marks", authenticate, async (req, res) => {
             `);
         res.json({ success: true, marks: result.recordset });
     } catch (error) {
-        console.error("Marks fetch error:", error.message);
+        logError("Marks fetch error", error);
         res.status(500).json({ success: false, message: "Unable to fetch marks" });
     }
 });
@@ -716,13 +798,16 @@ app.post("/api/attendance/mark", authenticate, authorize("teacher", "admin"), as
     }
 
     if (req.auth.role === "teacher") {
-        for (const record of records) {
-            if (!(await teacherCanManage(req.auth.user_id, Number(record.student_id), subjectId))) {
+        const studentIds = records.map((record) => Number(record.student_id));
+        try {
+            if (!(await teacherCanManageStudents(req.auth.user_id, studentIds, subjectId))) {
                 return res.status(403).json({
                     success: false,
                     message: "You are not assigned to this subject and class"
                 });
             }
+        } catch (error) {
+            return sendDatabaseError(res, error, "Attendance authorization error", "Unable to verify attendance access");
         }
     }
 
@@ -791,10 +876,10 @@ app.post("/api/attendance/mark", authenticate, authorize("teacher", "admin"), as
             try {
                 await transaction.rollback();
             } catch (rollbackError) {
-                console.error("Attendance rollback error:", rollbackError.message);
+                logError("Attendance rollback error", rollbackError);
             }
         }
-        console.error("Attendance save error:", error.message);
+        logError("Attendance save error", error);
         return res.status(500).json({ success: false, message: "Unable to save attendance" });
     }
 });
@@ -848,10 +933,10 @@ app.put("/api/teacher/marks", authenticate, authorize("teacher", "admin"), async
             try {
                 await transaction.rollback();
             } catch (rollbackError) {
-                console.error("Marks rollback error:", rollbackError.message);
+                logError("Marks rollback error", rollbackError);
             }
         }
-        console.error("Marks save error:", error.message);
+        logError("Marks save error", error);
         res.status(500).json({ success: false, message: "Unable to save marks" });
     }
 });
@@ -874,46 +959,73 @@ app.get("/api/dashboard/admin", authenticate, authorize("admin"), async (req, re
         `);
         res.json({ success: true, dashboard: result.recordset[0] });
     } catch (error) {
-        console.error("Admin dashboard error:", error.message);
+        logError("Admin dashboard error", error);
         res.status(500).json({ success: false, message: "Unable to load dashboard" });
     }
 });
 
 app.get("/api/admin/teachers/pending", authenticate, authorize("admin"), async (req, res) => {
+    const pagination = parsePagination(req.query);
+    if (!pagination) {
+        return res.status(400).json({ success: false, message: "Invalid page or page size" });
+    }
     try {
         const pool = await getPool();
-        const result = await pool.request().query(`
+        const result = await pool.request()
+            .input("offset", sql.Int, pagination.offset)
+            .input("page_size", sql.Int, pagination.limit)
+            .query(`
+            SELECT COUNT_BIG(*) AS total
+            FROM Teachers t
+            WHERE t.approval_status = 'pending';
+
             SELECT t.teacher_id, t.employee_code, u.full_name AS name, u.email,
                 d.department_name AS department, t.created_at
             FROM Teachers t
             JOIN Users u ON u.user_id = t.user_id
             JOIN Departments d ON d.department_id = t.department_id
             WHERE t.approval_status = 'pending'
-            ORDER BY t.created_at
+            ORDER BY t.created_at, t.teacher_id
+            OFFSET @offset ROWS FETCH NEXT @page_size ROWS ONLY
         `);
-        res.json({ success: true, teachers: result.recordset });
+        const total = Number(result.recordsets[0][0].total);
+        setPaginationHeaders(res, pagination, total);
+        return res.json({ success: true, teachers: result.recordsets[1] });
     } catch (error) {
-        console.error("Pending teacher fetch error:", error.message);
-        res.status(500).json({ success: false, message: "Unable to fetch pending teachers" });
+        return sendDatabaseError(res, error, "Pending teacher fetch error", "Unable to fetch pending teachers");
     }
 });
 
 app.get("/api/admin/teachers", authenticate, authorize("admin"), async (req, res) => {
+    const pagination = parsePagination(req.query);
+    if (!pagination) {
+        return res.status(400).json({ success: false, message: "Invalid page or page size" });
+    }
     try {
         const pool = await getPool();
-        const result = await pool.request().query(`
+        const result = await pool.request()
+            .input("offset", sql.Int, pagination.offset)
+            .input("page_size", sql.Int, pagination.limit)
+            .query(`
+            SELECT COUNT_BIG(*) AS total
+            FROM Teachers t
+            JOIN Users u ON u.user_id = t.user_id
+            WHERE u.is_active = 1 AND t.approval_status = 'approved';
+
             SELECT t.teacher_id, t.employee_code, u.full_name AS name, u.email,
                 d.department_name AS department, t.approval_status
             FROM Teachers t
             JOIN Users u ON u.user_id = t.user_id
             JOIN Departments d ON d.department_id = t.department_id
             WHERE u.is_active = 1 AND t.approval_status = 'approved'
-            ORDER BY u.full_name
+            ORDER BY u.full_name, t.teacher_id
+            OFFSET @offset ROWS FETCH NEXT @page_size ROWS ONLY
         `);
-        res.json({ success: true, teachers: result.recordset });
+        const total = Number(result.recordsets[0][0].total);
+        setPaginationHeaders(res, pagination, total);
+        return res.json({ success: true, teachers: result.recordsets[1] });
     } catch (error) {
-        console.error("Teacher fetch error:", error.message);
-        res.status(500).json({ success: false, message: "Unable to fetch teachers" });
+        return sendDatabaseError(res, error, "Teacher fetch error", "Unable to fetch teachers");
     }
 });
 
@@ -938,7 +1050,7 @@ app.put("/api/admin/teachers/:id/approval", authenticate, authorize("admin"), as
         }
         return res.json({ success: true, message: `Teacher registration ${status}` });
     } catch (error) {
-        console.error("Teacher approval error:", error.message);
+        logError("Teacher approval error", error);
         return res.status(500).json({ success: false, message: "Unable to update teacher approval" });
     }
 });
@@ -970,7 +1082,7 @@ app.get("/api/dashboard/teacher", authenticate, authorize("teacher", "admin"), a
         `);
         res.json({ success: true, dashboard: result.recordset[0] });
     } catch (error) {
-        console.error("Teacher dashboard error:", error.message);
+        logError("Teacher dashboard error", error);
         res.status(500).json({ success: false, message: "Unable to load dashboard" });
     }
 });
@@ -996,7 +1108,7 @@ app.get("/api/dashboard/student", authenticate, authorize("student"), async (req
             `);
         res.json({ success: true, user, dashboard: result.recordset[0] });
     } catch (error) {
-        console.error("Student dashboard error:", error.message);
+        logError("Student dashboard error", error);
         res.status(500).json({ success: false, message: "Unable to load dashboard" });
     }
 });
@@ -1008,13 +1120,14 @@ app.use("/api", (req, res) => {
 app.get(/.*/, (req, res, next) => {
     const reactIndex = path.join(__dirname, "dist", "index.html");
     const legacyIndex = path.join(__dirname, "public", "legacy-login.html");
+    res.setHeader("Cache-Control", "no-cache");
     res.sendFile(require("fs").existsSync(reactIndex) ? reactIndex : legacyIndex, (error) => {
         if (error) next(error);
     });
 });
 
 app.use((error, req, res, next) => {
-    console.error("Unhandled request error:", error.message);
+    logError("Unhandled request error", error);
     if (res.headersSent) {
         return next(error);
     }
@@ -1029,14 +1142,14 @@ async function start() {
         console.log(`Student Portal running at http://localhost:${PORT}`);
     });
     getPool().catch((error) => {
-        console.error("Initial Azure SQL connection failed; the API is still running:", error.message);
+        logError("Initial Azure SQL connection failed; the API is still running", error);
     });
     return server;
 }
 
 if (require.main === module) {
     start().catch((error) => {
-        console.error("Server startup failed:", error.message);
+        logError("Server startup failed", error);
         process.exitCode = 1;
     });
 }

@@ -41,6 +41,38 @@ test("attendance class rosters are restricted to authenticated teachers", async 
     assert.equal(studentResponse.status, 403);
 });
 
+test("admin list endpoints reject invalid pagination before querying SQL", async () => {
+    const token = jwt.sign(
+        { user_id: 7, role: "admin" },
+        process.env.JWT_SECRET,
+        { expiresIn: "1m", algorithm: "HS256" }
+    );
+    const response = await fetch(`${baseUrl}/api/admin/teachers/pending?page=0`, {
+        headers: { Cookie: `student_portal_session=${token}` }
+    });
+    assert.equal(response.status, 400);
+    assert.equal((await response.json()).message, "Invalid page or page size");
+});
+
+test("API responses emit structured duration logs", async () => {
+    const entries = [];
+    const originalLog = console.log;
+    console.log = (entry) => entries.push(entry);
+    try {
+        const response = await fetch(`${baseUrl}/api/teacher/attendance-classes`);
+        await response.text();
+        assert.equal(response.status, 401);
+    } finally {
+        console.log = originalLog;
+    }
+
+    const entry = entries.map((line) => JSON.parse(line))
+        .find((line) => line.type === "api_request" && line.path === "/api/teacher/attendance-classes");
+    assert.ok(entry);
+    assert.equal(entry.status, 401);
+    assert.equal(typeof entry.duration_ms, "number");
+});
+
 test("admin APIs reject authenticated non-admin users", async () => {
     const token = jwt.sign(
         { user_id: 7, role: "student" },
@@ -82,10 +114,12 @@ test("the configured Vite origin can make state-changing API requests", async ()
         }
     });
     assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
 });
 
 test("the React app shell is served at the root", async () => {
     const response = await fetch(`${baseUrl}/`);
     assert.equal(response.status, 200);
     assert.match(await response.text(), /Student Portal/);
+    assert.equal(response.headers.get("cache-control"), "no-cache");
 });

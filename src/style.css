@@ -1258,6 +1258,30 @@ select:focus {
     border-radius: 10px;
 }
 
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    color: #626d7d;
+    font-size: 10px;
+}
+
+.pagination-controls > div {
+    display: flex;
+    gap: 6px;
+}
+
+.pagination-controls .small-button {
+    margin: 0;
+}
+
+.pagination-controls .small-button:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
 table {
     min-width: 450px;
     font-size: 11px;
@@ -1547,6 +1571,10 @@ td strong {
 .theme-dark .quick-link strong,
 .theme-dark .table-person {
     color: #d9dced;
+}
+
+.theme-dark .pagination-controls {
+    color: #a7aec4;
 }
 
 .theme-dark .student-information-card,

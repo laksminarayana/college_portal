@@ -42,7 +42,9 @@ vite.config.js           Development API proxy
    Management Studio or Azure Data Studio. The script creates schema only; it
    inserts no fake users or sample production data. If the existing `Employees`
    table has a `Department` column, distinct department names are copied into
-   `Departments`; existing employee rows are not changed.
+   `Departments`; existing employee rows are not changed. The script also adds
+   missing query indexes idempotently; re-run it after pulling schema/index
+   updates.
 6. Copy `.env.example` to `.env`, then set the Azure SQL password and a unique
    random `JWT_SECRET` of at least 32 characters. Set `FRONTEND_ORIGIN` to the
    exact frontend origin when deployed. Do not commit `.env`.
@@ -105,6 +107,21 @@ The automated tests cover authentication and role guards without requiring an
 Azure connection. Registration, login against stored hashes, attendance, and
 dashboard data require a reachable Azure SQL database with the schema applied,
 an administrator created, and valid local `.env` credentials.
+
+## API performance and operations
+
+API requests emit JSON duration records to the server log for Azure Log Stream.
+List endpoints accept `page` and `limit` query parameters (default 50, maximum
+100) and return totals in `X-Total-Count`, `X-Page`, `X-Page-Size`, and
+`X-Total-Pages` headers. The React app loads authenticated dashboards on demand.
+Hashed build assets are cached as immutable; HTML stays revalidated so new
+deployments are picked up. Authentication endpoints are rate limited.
+
+Redis is not configured: the current portal has no measured cache bottleneck,
+and introducing shared cache infrastructure would add operational cost and
+invalidation complexity. Azure SQL execution plans and query latency must be
+reviewed against the live database in Query Store or execution-plan tooling;
+local tests do not have Azure access.
 
 ## Current implementation boundaries
 

@@ -177,3 +177,34 @@ IF NOT EXISTS (
     WHERE name = N'IX_Teachers_ApprovalStatus' AND object_id = OBJECT_ID(N'dbo.Teachers')
 )
     CREATE INDEX IX_Teachers_ApprovalStatus ON dbo.Teachers (approval_status);
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'IX_Students_ClassRoster' AND object_id = OBJECT_ID(N'dbo.Students')
+)
+    CREATE INDEX IX_Students_ClassRoster
+        ON dbo.Students (department_id, study_year, section)
+        INCLUDE (student_id, user_id, student_code);
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'IX_TeacherAssignments_TeacherClass' AND object_id = OBJECT_ID(N'dbo.TeacherAssignments')
+)
+    CREATE INDEX IX_TeacherAssignments_TeacherClass
+        ON dbo.TeacherAssignments (teacher_id, study_year, section, subject_id);
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'IX_Teachers_ApprovalCreatedAt' AND object_id = OBJECT_ID(N'dbo.Teachers')
+)
+    CREATE INDEX IX_Teachers_ApprovalCreatedAt
+        ON dbo.Teachers (approval_status, created_at)
+        INCLUDE (teacher_id, user_id, department_id, employee_code);
+
+IF NOT EXISTS (
+    SELECT 1 FROM sys.indexes
+    WHERE name = N'IX_Users_ActiveName' AND object_id = OBJECT_ID(N'dbo.Users')
+)
+    CREATE INDEX IX_Users_ActiveName
+        ON dbo.Users (is_active, full_name)
+        INCLUDE (user_id, email, role);
