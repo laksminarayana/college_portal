@@ -974,6 +974,96 @@ select:focus {
     font-size: 12px;
 }
 
+.student-information-card {
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid #dfe5ed;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.student-information-heading {
+    display: flex;
+    min-height: 52px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid #edf0f5;
+    padding: 12px 18px;
+    background: #f8fafc;
+}
+
+.student-information-heading span {
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .09em;
+}
+
+.student-information-heading small {
+    color: #7a8495;
+    font-size: 10px;
+}
+
+.student-profile-summary {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 18px;
+    align-items: stretch;
+    padding: 18px;
+}
+
+.student-profile-photo {
+    display: grid;
+    min-height: 124px;
+    place-items: center;
+    border: 1px solid #dbe4f0;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #eef6ff, #dceafa);
+    color: #1d4ed8;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -.05em;
+}
+
+.student-profile-details dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: 100%;
+    margin: 0;
+    border-top: 1px solid #edf0f5;
+    border-left: 1px solid #edf0f5;
+}
+
+.student-profile-details dl div {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
+    align-items: center;
+    min-height: 62px;
+    border-right: 1px solid #edf0f5;
+    border-bottom: 1px solid #edf0f5;
+}
+
+.student-profile-details dt,
+.student-profile-details dd {
+    margin: 0;
+    padding: 10px 12px;
+}
+
+.student-profile-details dt {
+    color: #687386;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.student-profile-details dd {
+    min-width: 0;
+    color: #30394f;
+    font-size: 11px;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
 .banner-decoration {
     display: none;
 }
@@ -1459,6 +1549,32 @@ td strong {
     color: #d9dced;
 }
 
+.theme-dark .student-information-card,
+.theme-dark .student-information-heading,
+.theme-dark .student-profile-details dl,
+.theme-dark .student-profile-details dl div {
+    border-color: #2a2f44;
+}
+
+.theme-dark .student-information-card,
+.theme-dark .student-profile-photo {
+    background: #191d30;
+}
+
+.theme-dark .student-information-heading {
+    background: #20253a;
+}
+
+.theme-dark .student-profile-details dd,
+.theme-dark .student-profile-photo {
+    color: #dbeafe;
+}
+
+.theme-dark .student-profile-details dt,
+.theme-dark .student-information-heading small {
+    color: #a7aec4;
+}
+
 .theme-dark .quick-link small,
 .theme-dark th {
     color: #a7aec4;
@@ -1581,6 +1697,19 @@ td strong {
     .three-column {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .student-profile-summary {
+        grid-template-columns: 96px minmax(0, 1fr);
+    }
+
+    .student-profile-details dl {
+        grid-template-columns: 1fr;
+    }
+
+    .student-profile-details dl div {
+        grid-template-columns: 108px minmax(0, 1fr);
+        min-height: 54px;
+    }
 }
 
 @media (max-width: 580px) {
@@ -1645,6 +1774,40 @@ td strong {
     .welcome-banner p {
         max-width: 240px;
         font-size: 10px;
+    }
+
+    .student-information-heading {
+        min-height: 46px;
+        padding: 10px 13px;
+    }
+
+    .student-profile-summary {
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .student-profile-photo {
+        min-height: 102px;
+        font-size: 22px;
+    }
+
+    .student-profile-details dl div {
+        grid-template-columns: 82px minmax(0, 1fr);
+        min-height: 51px;
+    }
+
+    .student-profile-details dt,
+    .student-profile-details dd {
+        padding: 8px;
+    }
+
+    .student-profile-details dt {
+        font-size: 8px;
+    }
+
+    .student-profile-details dd {
+        font-size: 9px;
     }
 
     .stats-grid {

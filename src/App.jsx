@@ -395,18 +395,41 @@ function StudentDashboard({ user, view, onNavigate }) {
     const markRows = (data?.marks || []).map((item) => (
         <tr key={item.mark_id}><td>{item.subject_name}</td><td>{item.exam_type}</td><td><strong>{item.marks}</strong><span className="muted"> / 100</span></td></tr>
     ));
+    const markAverage = data?.marks?.length
+        ? (data.marks.reduce((total, item) => total + Number(item.marks || 0), 0) / data.marks.length).toFixed(1)
+        : "—";
+    const initials = user.name
+        ? user.name.split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase()
+        : "S";
 
     return (
         <>
             <Message error>{error}</Message>
             {view === "overview" && <>
-                <section className="welcome-banner">
-                    <div><span className="banner-label">STUDENT SUMMARY</span><h2>Attendance and academic results</h2><p>{user.department || "Department not set"}{user.year ? ` · Year ${user.year}` : ""}{user.section ? ` · Section ${user.section}` : ""}</p></div>
+                <section className="student-information-card">
+                    <div className="student-information-heading">
+                        <span>STUDENT INFORMATION</span>
+                        <small>Academic record</small>
+                    </div>
+                    <div className="student-profile-summary">
+                        <div className="student-profile-photo" aria-label={`${user.name} profile`}>{initials}</div>
+                        <div className="student-profile-details">
+                            <dl>
+                                <div><dt>Student name</dt><dd>{user.name}</dd></div>
+                                <div><dt>Student ID</dt><dd>{user.username || `S-${user.student_id}`}</dd></div>
+                                <div><dt>Department</dt><dd>{user.department || "Not assigned"}</dd></div>
+                                <div><dt>Academic year</dt><dd>{user.year ? `Year ${user.year}` : "Not assigned"}</dd></div>
+                                <div><dt>Section</dt><dd>{user.section || "Not assigned"}</dd></div>
+                                <div><dt>Email</dt><dd>{user.email || "Not available"}</dd></div>
+                            </dl>
+                        </div>
+                    </div>
                 </section>
                 <div className="stats-grid">
                     <Stat label="Attendance rate" value={data ? `${data.dashboard.attendance_percentage}%` : "—"} detail="Present and late count as attended" tone="indigo" />
                     <Stat label="Days attended" value={data?.dashboard.days_present ?? "—"} detail="Across your recorded classes" tone="teal" />
                     <Stat label="Working days" value={data?.dashboard.total_working_days ?? "—"} detail="Attendance days recorded" tone="amber" />
+                    <Stat label="Average marks" value={markAverage === "—" ? "—" : `${markAverage}%`} detail="Across recorded assessments" tone="rose" />
                 </div>
                 <div className="two-column dashboard-columns">
                     <section className="content-card">
