@@ -16,7 +16,7 @@ function getDatabaseConfig() {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         options: {
-            encrypt: process.env.DB_ENCRYPT !== "false",
+            encrypt: process.env.DB_ENCRYPT === "true",
             trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === "true"
         },
         pool: {
