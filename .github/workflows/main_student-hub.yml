@@ -49,6 +49,7 @@ jobs:
             scripts/
             server.js
             database.js
+            pagination.js
             package.json
             package-lock.json
             node_modules/
