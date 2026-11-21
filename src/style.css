@@ -2165,3 +2165,326 @@ td strong {
         width: 100%;
     }
 }
+
+:root {
+    --ink: #29352d;
+    --muted: #6d786f;
+    --line: #e4e8e1;
+    --surface: #fffefa;
+    --accent: #5b735e;
+    --accent-soft: #edf2eb;
+    color: var(--ink);
+    background: #f6f7f3;
+}
+
+body,
+.app-shell {
+    background: #f6f7f3;
+}
+
+.auth-page {
+    background: #f3f5f0;
+}
+
+.auth-card,
+.sidebar,
+.topbar {
+    border-color: var(--line);
+    background: var(--surface);
+}
+
+.auth-card {
+    box-shadow: 0 10px 28px rgba(41, 53, 45, .07);
+}
+
+.brand-mark,
+.brand-mark.small {
+    background: var(--accent);
+}
+
+.eyebrow,
+.student-information-heading span {
+    color: var(--accent);
+}
+
+.muted,
+.page-context .muted,
+.section-heading p {
+    color: #647168;
+}
+
+input:focus,
+select:focus {
+    border-color: #819582;
+    box-shadow: 0 0 0 3px rgba(91, 115, 94, .14);
+}
+
+.primary-button {
+    background: var(--accent);
+}
+
+.primary-button:hover:not(:disabled) {
+    background: #4a624e;
+}
+
+.text-button,
+.quick-link-arrow {
+    color: #506b54;
+}
+
+.setup-note {
+    border-color: #e1e7de;
+    background: #f7f8f4;
+}
+
+.sidebar-link.active {
+    background: var(--accent-soft);
+    color: #405b45;
+}
+
+.sidebar-link.active::before {
+    background: #6e876f;
+}
+
+.sidebar-link:hover,
+.sidebar-logout:hover,
+.quick-link:hover {
+    background: #f4f6f1;
+}
+
+.user-avatar,
+.topbar-avatar,
+.table-avatar,
+.student-initial {
+    background: #e8eee6;
+    color: #506b54;
+}
+
+.theme-toggle:hover,
+.menu-toggle:hover {
+    border-color: #cbd6c9;
+    background: #f2f5ef;
+}
+
+.welcome-banner,
+.student-information-card {
+    border-color: #e1e7de;
+    background: var(--surface);
+}
+
+.teacher-banner {
+    border-left-color: #758b6c;
+}
+
+.admin-banner {
+    border-left-color: #929782;
+}
+
+.student-information-heading,
+th {
+    background: #f6f7f3;
+}
+
+.student-profile-photo {
+    border-color: #dce5d9;
+    background: linear-gradient(145deg, #f0f3ed, #e5ebe1);
+    color: #506b54;
+}
+
+.stat-mark {
+    background: #718873;
+}
+
+.stat-teal .stat-mark {
+    background: #789588;
+}
+
+.stat-amber .stat-mark {
+    background: #bd9d69;
+}
+
+.stat-rose .stat-mark {
+    background: #b77c73;
+}
+
+.percentage-pill {
+    background: #e9f1e8;
+    color: #47664c;
+}
+
+.count-badge,
+.subtle-button,
+.small-button {
+    background: #edf2eb;
+    color: #49624d;
+}
+
+.subtle-button:hover,
+.small-button:hover {
+    background: #dfe9dd;
+}
+
+.table-person,
+.section-heading h2 {
+    color: #35443a;
+}
+
+.attendance-roster-heading {
+    background: #f6f7f3;
+}
+
+.attendance-choice-present.selected {
+    border-color: #c5d8c3;
+    background: #edf4eb;
+    color: #45684a;
+}
+
+.attendance-choice button:focus-visible {
+    outline-color: rgba(91, 115, 94, .35);
+}
+
+.theme-dark {
+    --ink: #e7ece5;
+    --muted: #b0bbb1;
+    --line: #343d35;
+    --surface: #202720;
+    --accent: #9ab19a;
+    --accent-soft: #2b382d;
+    background: #171d18;
+    color: var(--ink);
+}
+
+.theme-dark .app-shell,
+.theme-dark .main-panel {
+    background: #171d18;
+}
+
+.theme-dark .sidebar,
+.theme-dark .topbar,
+.theme-dark .content-card,
+.theme-dark .stat-card,
+.theme-dark .student-information-card {
+    border-color: var(--line);
+    background: var(--surface);
+}
+
+.theme-dark .topbar {
+    background: #1c231d;
+}
+
+.theme-dark .sidebar-brand,
+.theme-dark .sidebar-user-copy strong,
+.theme-dark .page-context h1,
+.theme-dark .stat-card strong,
+.theme-dark .section-heading h2,
+.theme-dark td strong,
+.theme-dark .topbar-user strong,
+.theme-dark .activity-row strong,
+.theme-dark .activity-row b,
+.theme-dark .table-person {
+    color: #e7ece5;
+}
+
+.theme-dark .sidebar-link,
+.theme-dark .sidebar-logout,
+.theme-dark .topbar-profile time,
+.theme-dark .topbar-user small,
+.theme-dark .muted,
+.theme-dark .stat-top,
+.theme-dark .stat-card > small,
+.theme-dark .section-heading p,
+.theme-dark .activity-row small,
+.theme-dark td,
+.theme-dark .pagination-controls {
+    color: #b0bbb1;
+}
+
+.theme-dark .sidebar-link:hover,
+.theme-dark .sidebar-logout:hover,
+.theme-dark .campus-note,
+.theme-dark .quick-link,
+.theme-dark th,
+.theme-dark .student-information-heading,
+.theme-dark .attendance-roster-heading,
+.theme-dark .attendance-submit-row {
+    background: #252e26;
+}
+
+.theme-dark .sidebar-link.active {
+    background: #2b382d;
+    color: #d4e4d3;
+}
+
+.theme-dark .sidebar-link.active::before {
+    background: #9ab19a;
+}
+
+.theme-dark .campus-note,
+.theme-dark .quick-link,
+.theme-dark .table-scroll,
+.theme-dark .student-information-card,
+.theme-dark .student-information-heading,
+.theme-dark .student-profile-details dl,
+.theme-dark .student-profile-details dl div,
+.theme-dark .attendance-roster,
+.theme-dark .attendance-student-row {
+    border-color: var(--line);
+}
+
+.theme-dark .quick-link strong,
+.theme-dark .student-profile-details dd,
+.theme-dark .student-profile-photo,
+.theme-dark .attendance-student strong {
+    color: #e0e9df;
+}
+
+.theme-dark .student-profile-photo,
+.theme-dark .user-avatar,
+.theme-dark .topbar-avatar,
+.theme-dark .table-avatar,
+.theme-dark .student-initial {
+    border-color: #3a473b;
+    background: #2b382d;
+    color: #c8ddc7;
+}
+
+.theme-dark .student-information-heading small,
+.theme-dark .student-profile-details dt,
+.theme-dark .quick-link small,
+.theme-dark th,
+.theme-dark .attendance-roster-heading,
+.theme-dark .attendance-submit-row > span {
+    color: #b0bbb1;
+}
+
+.theme-dark .theme-toggle,
+.theme-dark .menu-toggle,
+.theme-dark input,
+.theme-dark select {
+    border-color: #3a473b;
+    background: #1b221c;
+    color: #e7ece5;
+}
+
+.theme-dark .theme-toggle:hover,
+.theme-dark .menu-toggle:hover {
+    background: #2b382d;
+}
+
+.theme-dark .count-badge,
+.theme-dark .subtle-button,
+.theme-dark .small-button {
+    background: #2b382d;
+    color: #c8ddc7;
+}
+
+.theme-dark .percentage-pill {
+    background: #2b382d;
+    color: #c8ddc7;
+}
+
+.theme-dark .attendance-choice-present.selected {
+    border-color: #547658;
+    background: #2b382d;
+    color: #c8ddc7;
+}
